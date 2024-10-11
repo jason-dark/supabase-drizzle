@@ -1,0 +1,50 @@
+name: Release to NPM
+
+on:
+  push:
+    tags:
+      - 'v*'  # This will trigger on any tag that starts with 'v' (e.g., v1.0.0)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest 
+
+    steps:
+    # Step 1: Checkout the repository code
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Node.js (v20)
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    # Step 3: Cache Yarn dependencies
+    - name: Cache Yarn dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/yarn
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    # Step 4: Install dependencies with Yarn using frozen lockfile
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile
+
+    # Step 5: Run tests
+    - name: Run tests
+      run: yarn test
+
+    # Step 6: Build the package
+    - name: Build the package
+      run: yarn build
+
+    # Step 7: Publish to NPM 
+    - name: Publish to NPM
+      run: |
+        echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+        yarn publish --new-version ${{ github.ref_name }} --non-interactive --frozen-lockfile
+      env:
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }} 
