@@ -1516,9 +1516,6 @@ dotenv@^16.4.5:
   resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.4.5.tgz"
   integrity sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==
 
-"drizzle-cli@file:../drizzle-orm/drizzle-kit/src/cli":
-  version "0.0.0"
-
 drizzle-kit@^0.25.0:
   version "0.25.0"
   resolved "https://registry.npmjs.org/drizzle-kit/-/drizzle-kit-0.25.0.tgz"

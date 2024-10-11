@@ -6,7 +6,6 @@
   "dependencies": {
     "chalk": "^4",
     "commander": "^12.1.0",
-    "drizzle-cli": "file:../drizzle-orm/drizzle-kit/src/cli",
     "drizzle-kit": "^0.25.0"
   },
   "description": "Manage Supabase RLS policies in Typescript and integrate with Drizzle ORM",
