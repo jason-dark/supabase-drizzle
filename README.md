@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/supabase-drizzle)](https://www.npmjs.com/package/supabase-drizzle)
 [![License](https://img.shields.io/github/license/jason-dark/supabase-drizzle)](./LICENSE)
-[![Build Status](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml)
+[![CI - Test and Build](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml)
 [![Release to NPM](https://github.com/jason-dark/supabase-drizzle/actions/workflows/release.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/release.yml)
 
 
@@ -12,7 +12,7 @@
 
 ---
 
-## Motivation 💡
+## Motivation 🔥
 
 Drizzle ORM makes managing your database schema in TypeScript and handling migrations simple. However, managing RLS policies still requires manual SQL or using the Supabase dashboard, which can slow down your workflow.
 
@@ -20,7 +20,7 @@ Drizzle ORM makes managing your database schema in TypeScript and handling migra
 
 ---
 
-## Installation 🛠
+## Installation 📦
 
 To install **`supabase-drizzle`**, simply run:
 
@@ -117,10 +117,8 @@ npx drizzle-kit migrate --config drizzle/drizzle.config.ts
 ```
 
 ### Step 7
-For ease of use, consider adding these scripts to your `package.json`:
+For ease of use, consider adding these scripts to your `package.json` (Make sure to point to the correct config file location for your project):
 ```json
-// Make sure to point to the correct config file location for your project
-
 {
 
   "scripts": {
