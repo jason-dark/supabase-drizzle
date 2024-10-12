@@ -2,20 +2,21 @@
 
 [![npm version](https://img.shields.io/npm/v/supabase-drizzle)](https://www.npmjs.com/package/supabase-drizzle)
 [![License](https://img.shields.io/github/license/jason-dark/supabase-drizzle)](./LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/jason-dark/supabase-drizzle/ci.yml)](https://github.com/jason-dark/supabase-drizzle/actions)
+[![Build Status](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml)
+[![Release to NPM](https://github.com/jason-dark/supabase-drizzle/actions/workflows/release.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/release.yml)
 
 
 ## Overview
 
-**`supabase-drizzle`** helps you manage Postgres RLS policies with a Drizzle like syntax in the same way you use Drizzle to manage your Postgres schema.
+**`supabase-drizzle`** lets you manage Postgres RLS policies with Drizzle-like syntax, just as you manage your Postgres schema..
 
 ---
 
 ## Motivation 💡
 
-Using an ORM like Drizzle makes it easy to manage your database schema in Typescript and perform migrations. However there is no support for managing RLS policies. Having to manually write RLS policies in SQL or via the Supabase dashboard adds time to your workflow. 
+Drizzle ORM makes managing your database schema in TypeScript and handling migrations simple. However, managing RLS policies still requires manual SQL or using the Supabase dashboard, which can slow down your workflow.
 
-The goal of **`supabase-drizzle`** is to help you move faster by making RLS policy management as simple as your Drizzle schema management.
+**`supabase-drizzle`** aims to streamline this process, making RLS policy management as easy and intuitive as managing your schema with Drizzle, so you can move faster.
 
 ---
 
@@ -41,16 +42,19 @@ npm install drizzle-kit drizzle-orm
 ---
 ## Usage ⚡️
 
-**1]** Follow the Drizzle setup guide for Supabase, then come back here and carry on to step 2.
+### Step 1
+ Follow the [Drizzle setup guide for Supabase](https://orm.drizzle.team/docs/tutorials/drizzle-with-supabase), then come back here and carry on to step 2.
 
-**2]** Add a file `policies.config.ts` in the same directory as your `drizzle.config.ts` file.
+### Step 2
+Add a file `policies.config.ts` in the same directory as your `drizzle.config.ts` file.
 
-**3]** In `drizzle.config.ts`, import `defineConfig` from `supabase-drizzle` instead of `drizzle-kit`:
+### Step 3
+In `drizzle.config.ts`, import `defineConfig` from `supabase-drizzle` instead of `drizzle-kit`:
 ```diff
 - import { defineConfig } from 'drizzle-kit';
 + import { defineConfig } from 'supabase-drizzle';
 ```
-Your config file will now support a `policies` option. This should point to the policies file you make in step 2, `policies.config.ts`:
+Your config file will now support a `policies` option. This should point to the policies file `policies.config.ts` you made in step 2:
 ```typescript
 // drizzle.config.ts
 
@@ -70,7 +74,9 @@ export default defineConfig({
   policies: 'drizzle/policies.ts'
 });
 ```
-**4]** Define RLS policies for your tables in `policies.config.ts`:
+
+### Step 4
+Define RLS policies for your tables in `policies.config.ts`:
 ```typescript
 // policies.config.ts
 
@@ -92,38 +98,63 @@ const salariesTablePolicy = rlsPolicyBuilder('salaries', {
 // Make sure your policies are exported from the file!
 export { salariesTablePolicy, timeLogsTablePolicy };
 ```
-**5]** Generate your RLS policy migration:
+
+### Step 5
+Generate your RLS policy migration:
 ```bash
-# Make sure the file path to the config file is correct for you
+# Make sure to point to the correct config file location for your project
+
 npx supabase-drizzle generate --config drizzle/drizzle.config.ts
 ```
-**6]** Run the migration using drizzle:
+> `supabase-drizzle generate` outputs the location of the generated SQL migration file for your RLS policies. I suggest you manually check this for errors.
+
+### Step 6
+Run the migration using drizzle:
 ```bash
+# Make sure to point to the correct config file location for your project
+
 npx drizzle-kit migrate --config drizzle/drizzle.config.ts
 ```
-**7]** For ease of use, consider adding these scripts to your `package.json`:
+
+### Step 7
+For ease of use, consider adding these scripts to your `package.json`:
 ```json
+// Make sure to point to the correct config file location for your project
+
 {
 
   "scripts": {
     "drizzle-generate-schema": "npx drizzle-kit generate --config drizzle/drizzle.config.ts",
     "drizzle-generate-rls": "npx supabase-drizzle generate --config drizzle/drizzle.config.ts",
-    "drizzle-migrate": "npx drizzle-kit migrate --config drizzle/drizzle.config.ts"
+    "drizzle-migrate": "npx drizzle-kit migrate --config drizzle/drizzle.config.ts",
   }
 }
 ```
-Then you can run:
+Then you can sync your local schema and RLS policies to Supabase in one go using:
 ```bash
 yarn drizzle-generate-schema && drizzle-generate-rls && yarn drizzle-migrate
 #or
 npm run drizzle-generate-schema && npm run drizzle-generate-rls && npm run yarn drizzle-migrate
 ```
-To generate migrations for your schema, your RLS policies, and push them to your DB in one go!
 
 ---
 ## Documentation 📚
 
-**`userIsOwner()`**
+### **`rlsPolicyBuilder(tableName: string, policies: PolicyConditions)`**
+
+Defines the RLS policies for a given table. Requires two arguments; the table name and an object that describes its RLS policies. Make sure to only reference tables by their names as defined in your Drizzle schema.
+```typescript
+const timeLogsTablePolicy = rlsPolicyBuilder('todos', {
+  insert: userIsOwner(),
+  update: userIsOwner(),
+  delete: userIsOwner(),
+  select: allowAllAccess(),
+});
+
+export { timeLogsTablePolicy };
+```
+
+### **`userIsOwner()`**
 
 Allows access to only the owner of a row for a given method, or for all methods. Ownership is determined by matching the `user_id` column on the table with the authenticated user's id. In this example, only the owner can `INSERT` or `UPDATE` the row: 
 ```typescript
@@ -134,13 +165,14 @@ const timeLogsTablePolicy = rlsPolicyBuilder('time_logs', {
   select: allowAllAccess(),
 });
 ```
-You can also apply this policy to all methods. In this example, only the owner can `INSERT`, `UPDATE`, `DELETE`, and `SELECT` their row.
+You can also apply this policy to **all** methods. In this example, only the owner can `INSERT`, `UPDATE`, `DELETE`, and `SELECT` their row.
 ```typescript
 const timeLogsTablePolicy = rlsPolicyBuilder('hr_complaints', {
   all: userIsOwner(),
 });
 ```
-**`denyAllAccess()`**
+
+### **`denyAllAccess()`**
 
 Denies access to all users for a given method, or for all methods on table: 
 ```typescript
@@ -157,7 +189,7 @@ const timeLogsTablePolicy = rlsPolicyBuilder('pay_rises', {
 });
 ```
 
-**`allowAllAccess()`**
+###  **`allowAllAccess()`**
 
 Allows access to all users for a given method, or for all methods on table: 
 ```typescript
@@ -177,24 +209,26 @@ const timeLogsTablePolicy = rlsPolicyBuilder('executive_salaries', {
 ---
 ## Limitations 🚫 
 
-- I have not tested this package on windows. If there is enough interest I might look into it.
-- Only Typescript Supabase config is supported. Plain JS will not work.
+- I have only tested this lib on MacOS. I expect it will work on *nix systems but not Windows. If there is enough interest I might look into it.
+- Only Typescript [Drizzle Kit config](https://orm.drizzle.team/docs/drizzle-config-file) files are supported. Plain JavaScript will not work. Again, if there's enough interest I might look into it.
 
 ---
 ## Contributing 🤝
 
-Contributions are welcome. I am a single developer who built this to solve a problem I had, so if there's a feature you specifically want feel free to open a pull request.
+Contributions are welcome. I am a single developer who built this to solve a problem I had, so if there's a feature you specifically want feel free to open a [pull request](https://github.com/jason-dark/supabase-drizzle/pulls).
 
 ---
 ## License 📝
 
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](./LICENSE).
 
 ---
 ## Disclaimers❗ 
 
 - **`supabase-drizzle`** is not an official library affiliated with the Supabase or Drizzle teams.
-- This library is not yet battle tested. Exercise extreme caution and test thoroughly before using it on production databases. I make no guarantees that this lib is bug free.
+- I make no guarantees that this lib is bug free.
+- I strongly suggest that you manually review generated SQL for RLS migrations before running them.
+- Exercise extreme caution and test thoroughly before using this lib on production databases.
 
 ---
 ## TODOs 🚧
