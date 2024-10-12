@@ -216,11 +216,6 @@ const timeLogsTablePolicy = rlsPolicyBuilder('executive_salaries', {
 Contributions are welcome. I am a single developer who built this to solve a problem I had, so if there's a feature you specifically want feel free to open a [pull request](https://github.com/jason-dark/supabase-drizzle/pulls).
 
 ---
-## License 📝
-
-This project is licensed under the [MIT License](./LICENSE).
-
----
 ## Disclaimers❗ 
 
 - **`supabase-drizzle`** is not an official library affiliated with the Supabase or Drizzle teams.
@@ -234,5 +229,13 @@ This project is licensed under the [MIT License](./LICENSE).
 - [ ] Implement additional RLS policy utility functions (e.g., `userIsAdmin`, `userHasRole`).
 - [ ] Add more detailed error handling and logging for RLS policy generation.
 - [ ] Write tests.
+
+---
+## License 📝
+
+This project is licensed under the [MIT License](./LICENSE).
  
  ---
+ ## Authors
+
+- [@jason-dark](https://github.com/jason-dark)

@@ -58,8 +58,10 @@ const rlsPolicyBuilder = (tableName: string, conditions: PolicyConditions<Policy
     const sqlStatements: string[] = [`ALTER TABLE ${tableName} ENABLE ROW LEVEL SECURITY;`];
 
     if (conditions?.all) {
-      sqlStatements.push(conditions.all({ tableName, forTable: true }));
+      // If the `all` property is provided, we only process that property and ignore the rest
+      sqlStatements.push(conditions.all({ tableName, method: 'ALL' }));
     } else {
+      // If the `all` is provided, we only process policies for individual methods
       Object.entries(conditions).forEach(([method, policy]: [string, ReturnType<Policy>]) => {
         sqlStatements.push(policy({ tableName, method: method as SqlMethod }));
       });
