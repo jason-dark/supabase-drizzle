@@ -6,7 +6,12 @@ import { program } from 'commander';
 import { resolve } from 'path';
 import util from 'util';
 import { rlsPolicyBuilder } from '@/rls-policy-builder';
-import { clearExistingPoliciesSql, DefineConfigProps, runtimeLoadTsFile } from '@/utils';
+import {
+  clearExistingPoliciesSql,
+  createUserHasRoleDbFunction,
+  DefineConfigProps,
+  runtimeLoadTsFile,
+} from '@/utils';
 
 const execAsync = util.promisify(exec);
 
@@ -58,10 +63,15 @@ program
 
     const tableNames = policies.map((policy) => policy.tableName);
 
-    const sql =
-      clearExistingPoliciesSql(tableNames) +
-      `\n\n` +
-      policies.map((policy) => policy.func()).join('\n\n');
+    const needsUserHasRoleDbFunction = policies.some(
+      (policy) => policy.func().createUserHasRoleDbFunction
+    );
+
+    const rlsPoliciesSql = [
+      needsUserHasRoleDbFunction ? createUserHasRoleDbFunction() : '',
+      clearExistingPoliciesSql(tableNames),
+      policies.map((policy) => policy.func().sql).join('\n\n'),
+    ];
 
     let migrationFilePath = '';
 
@@ -69,7 +79,7 @@ program
       const { stdout } = await execAsync(`
         file=$(npx drizzle-kit generate --config ${config} --custom | grep 'Your SQL migration file' | awk -F '➜ ' '{print $2}' | awk '{print $1}')
         cat <<'EOF' > $file
-${sql}
+${rlsPoliciesSql.join('\n\n')}
 EOF
 echo $file
 `);

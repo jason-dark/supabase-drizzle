@@ -1,6 +1,7 @@
-// TODO: Add tests for RLS Policy Builder
-describe('RLS Policy Builder Placeholder Tests', () => {
+import { ifUserIsOwner, rlsPolicyBuilder } from './rls-policy-builder';
+
+describe('rlsPolicyBuilder', () => {
   it('should pass the placeholder test', () => {
-    expect(true).toBe(true);
+    expect(rlsPolicyBuilder('todos', { all: ifUserIsOwner() })).toBeTruthy();
   });
 });

@@ -1,11 +1,21 @@
 type SqlMethod = 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'ALL';
 
-type PolicyConditions<T extends (...args: unknown[]) => unknown> =
-  | ({ [K in Lowercase<Exclude<SqlMethod, 'ALL'>>]: ReturnType<T> } & { all?: never })
-  | ({ all: ReturnType<T> } & { [K in Lowercase<Exclude<SqlMethod, 'ALL'>>]?: never });
+type PolicyConditionValue<T extends (...args: never[]) => unknown> =
+  | ReturnType<T>
+  | ReturnType<T>[];
 
-type TableAccess = 'PUBLIC_ACCESS' | 'USER_IS_OWNER' | 'DENY_ALL';
+type PolicyConditionsAllMethods<T extends (...args: never[]) => unknown> = {
+  all: PolicyConditionValue<T>;
+} & { [K in Lowercase<Exclude<SqlMethod, 'ALL'>>]?: never };
 
-type PermissiveAccess = Extract<TableAccess, 'PUBLIC_ACCESS' | 'USER_IS_OWNER'>;
+type PolicyConditionsSingleMethods<T extends (...args: never[]) => unknown> = {
+  [K in Lowercase<Exclude<SqlMethod, 'ALL'>>]: PolicyConditionValue<T>;
+} & { all?: never };
 
-export type { PermissiveAccess, PolicyConditions, SqlMethod, TableAccess };
+type PolicyConditions<T extends (...args: never[]) => unknown> =
+  | PolicyConditionsAllMethods<T>
+  | PolicyConditionsSingleMethods<T>;
+
+type TableAccess = 'PUBLIC_ACCESS' | 'DENY_ALL' | 'USER_IS_OWNER' | 'USER_HAS_ROLE';
+
+export type { PolicyConditions, PolicyConditionValue, SqlMethod, TableAccess };

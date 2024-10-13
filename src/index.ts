@@ -1,2 +1,2 @@
 export * from './rls-policy-builder';
-export * from './utils/define-config';
+export * from './utils/define-config/define-config';

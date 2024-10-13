@@ -8,7 +8,7 @@
 
 ## Overview
 
-**`supabase-drizzle`** lets you manage Postgres RLS policies with Drizzle-like syntax, just as you manage your Postgres schema..
+**`supabase-drizzle`** lets you manage Postgres RLS policies with Drizzle-like syntax, just as you manage your Postgres schema.
 
 ---
 
@@ -80,12 +80,12 @@ Define RLS policies for your tables in `policies.config.ts`:
 ```typescript
 // policies.config.ts
 
-import { allowAllAccess, denyAllAccess, rlsPolicyBuilder, userIsOwner } from 'supabase-drizzle';
+import { allowAllAccess, denyAllAccess, rlsPolicyBuilder, ifUserIsOwner } from 'supabase-drizzle';
 
 // You can define policies for each method on a table like this:
 const timeLogsTablePolicy = rlsPolicyBuilder('time_logs', {
-  insert: userIsOwner(),
-  update: userIsOwner(),
+  insert: ifUserIsOwner(),
+  update: ifUserIsOwner(),
   delete: denyAllAccess(),
   select: allowAllAccess(),
 });
@@ -143,22 +143,22 @@ npm run drizzle-generate-schema && npm run drizzle-generate-rls && npm run yarn 
 Defines the RLS policies for a given table. Requires two arguments; the table name and an object that describes its RLS policies. Make sure to only reference tables by their names as defined in your Drizzle schema.
 ```typescript
 const timeLogsTablePolicy = rlsPolicyBuilder('todos', {
-  insert: userIsOwner(),
-  update: userIsOwner(),
-  delete: userIsOwner(),
+  insert: ifUserIsOwner(),
+  update: ifUserIsOwner(),
+  delete: ifUserIsOwner(),
   select: allowAllAccess(),
 });
 
 export { timeLogsTablePolicy };
 ```
 
-### **`userIsOwner()`**
+### **`ifUserIsOwner()`**
 
 Allows access to only the owner of a row for a given method, or for all methods. Ownership is determined by matching the `user_id` column on the table with the authenticated user's id. In this example, only the owner can `INSERT` or `UPDATE` the row: 
 ```typescript
 const timeLogsTablePolicy = rlsPolicyBuilder('time_logs', {
-  insert: userIsOwner(),
-  update: userIsOwner(),
+  insert: ifUserIsOwner(),
+  update: ifUserIsOwner(),
   delete: denyAllAccess(),
   select: allowAllAccess(),
 });
@@ -166,7 +166,7 @@ const timeLogsTablePolicy = rlsPolicyBuilder('time_logs', {
 You can also apply this policy to **all** methods. In this example, only the owner can `INSERT`, `UPDATE`, `DELETE`, and `SELECT` their row.
 ```typescript
 const timeLogsTablePolicy = rlsPolicyBuilder('hr_complaints', {
-  all: userIsOwner(),
+  all: ifUserIsOwner(),
 });
 ```
 
@@ -178,7 +178,7 @@ const timeLogsTablePolicy = rlsPolicyBuilder('leave_balances', {
   insert: denyAllAccess(),
   update: denyAllAccess(),
   delete: denyAllAccess(),
-  select: userIsOwner(),
+  select: ifUserIsOwner(),
 });
 ```
 ```typescript
@@ -193,9 +193,9 @@ Allows access to all users for a given method, or for all methods on table:
 ```typescript
 const timeLogsTablePolicy = rlsPolicyBuilder('staff_birthdays', {
   select: allowAllAccess(),
-  insert: userIsOwner(),
-  update: userIsOwner(),
-  delete: userIsOwner(),
+  insert: ifUserIsOwner(),
+  update: ifUserIsOwner(),
+  delete: ifUserIsOwner(),
 });
 ```
 You *can* allow all access to all methods on a table, but this is almost always **not something you should do**. Exercise extreme caution with this!
@@ -225,7 +225,7 @@ Contributions are welcome. I am a single developer who built this to solve a pro
 
 ---
 ## TODOs 🚧
-- [x] Implement `userIsOwner()`, `allowAllAccess()`, and `denyAllAccess()` functions.
+- [x] Implement `ifUserIsOwner()`, `allowAllAccess()`, and `denyAllAccess()` functions.
 - [ ] Implement additional RLS policy utility functions (e.g., `userIsAdmin`, `userHasRole`).
 - [ ] Add more detailed error handling and logging for RLS policy generation.
 - [ ] Write tests.

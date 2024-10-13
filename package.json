@@ -8,7 +8,7 @@
     "commander": "^12.1.0",
     "drizzle-kit": "^0.25.0"
   },
-  "description": "Manage Supabase RLS policies in Typescript and integrate with Drizzle ORM",
+  "description": "Manage Postgres RLS policies with Drizzle-like syntax, just as you manage your Postgres schema",
   "devDependencies": {
     "@eslint/js": "^9.12.0",
     "@types/eslint__js": "^8.42.3",
@@ -24,6 +24,7 @@
     "prettier": "^3.3.3",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
+    "tsconfig-paths-jest": "^0.0.1",
     "typescript": "5.5.4",
     "typescript-eslint": "^8.8.1"
   },
@@ -33,6 +34,10 @@
   "license": "ISC",
   "main": "dist/index.js",
   "name": "supabase-drizzle",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jason-dark/supabase-drizzle.git"
+  },
   "scripts": {
     "build": "tsc && npx tsc-alias",
     "lint": "eslint 'src/**/*.{ts}'",

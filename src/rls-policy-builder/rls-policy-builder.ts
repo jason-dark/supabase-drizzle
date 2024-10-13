@@ -1,17 +1,38 @@
-import { PolicyConditions, SqlMethod } from '../types';
-import { createAllowPolicy } from '../utils/create-allow-policy';
-import { CreateAllowPolicyProps } from '../utils/create-allow-policy';
-import { createDenyPolicy, CreateDenyPolicyProps } from '../utils/create-deny-policy';
+import { PolicyConditions, PolicyConditionValue, SqlMethod } from '../types';
+import { createRlsPolicy, CreateRlsPolicyProps } from '../utils/create-rls-policy/';
 
-const allowAllAccess = () => (props: Omit<CreateAllowPolicyProps, 'access'>) =>
-  createAllowPolicy({ access: 'PUBLIC_ACCESS', ...props } as CreateAllowPolicyProps);
+const allowAllAccess =
+  () =>
+  ({ method, tableName }: Omit<CreateRlsPolicyProps, 'access'>) =>
+    createRlsPolicy({ access: 'PUBLIC_ACCESS', method, tableName });
 
-const userIsOwner = () => (props: Omit<CreateAllowPolicyProps, 'access'>) =>
-  createAllowPolicy({ access: 'USER_IS_OWNER', ...props } as CreateAllowPolicyProps);
+const denyAllAccess =
+  () =>
+  ({ method, tableName }: Omit<CreateRlsPolicyProps, 'access'>) =>
+    createRlsPolicy({ access: 'DENY_ALL', method, tableName });
 
-const denyAllAccess = () => (props: CreateDenyPolicyProps) => createDenyPolicy(props);
+const ifUserIsOwner =
+  () =>
+  ({ method, tableName }: Omit<CreateRlsPolicyProps, 'access'>) =>
+    createRlsPolicy({ access: 'USER_IS_OWNER', method, tableName });
 
-type Policy = typeof allowAllAccess | typeof userIsOwner | typeof denyAllAccess;
+const ifUserHasRole = (userRole: string | string[]) => {
+  // Need to have this as a named function so that we can later detect if it was used
+  const ifUserHasRoleCreator = ({ method, tableName }: Omit<CreateRlsPolicyProps, 'access'>) =>
+    createRlsPolicy({
+      access: 'USER_HAS_ROLE',
+      userRole: Array.isArray(userRole) ? userRole : [userRole],
+      method,
+      tableName,
+    });
+  return ifUserHasRoleCreator;
+};
+
+type Policy =
+  | typeof allowAllAccess
+  | typeof denyAllAccess
+  | typeof ifUserIsOwner
+  | typeof ifUserHasRole;
 
 /**
  * Builds a Row-Level Security (RLS) policy for a given table.
@@ -37,9 +58,9 @@ type Policy = typeof allowAllAccess | typeof userIsOwner | typeof denyAllAccess;
  *
  * // Using individual method properties to specify policies:
  * const policyWithIndividualAccess = rlsPolicyBuilder('my_table', {
- *   select: userIsOwner(), // Valid
+ *   select: ifUserIsOwner(), // Valid
  *   insert: denyAllAccess(), // Valid
- *   update: userIsOwner(), // Valid
+ *   update: ifUserIsOwner(), // Valid
  *   delete: allowAllAccess(), // Valid
  *   // all: allowAllAccess() // Invalid: Cannot have both `all` and individual methods
  * });
@@ -57,19 +78,32 @@ const rlsPolicyBuilder = (tableName: string, conditions: PolicyConditions<Policy
   func: () => {
     const sqlStatements: string[] = [`ALTER TABLE ${tableName} ENABLE ROW LEVEL SECURITY;`];
 
-    if (conditions?.all) {
-      // If the `all` property is provided, we only process that property and ignore the rest
-      sqlStatements.push(conditions.all({ tableName, method: 'ALL' }));
-    } else {
-      // If the `all` is provided, we only process policies for individual methods
-      Object.entries(conditions).forEach(([method, policy]: [string, ReturnType<Policy>]) => {
-        sqlStatements.push(policy({ tableName, method: method as SqlMethod }));
-      });
-    }
+    let createUserHasRoleDbFunction = false;
 
-    return sqlStatements.join('\n');
+    // If the `all` property is provided, we only process that property and ignore the rest.
+    // This guards against type errors being ignored by the user.
+    const cleanedConditions = conditions?.all ? { all: conditions.all } : conditions;
+
+    // For each method (ALL, SELECT, INSERT, UPDATE, DELETE), generate the SQL statement for the policy(ies) provided
+    Object.entries(cleanedConditions).forEach((entry) => {
+      const [method, policy] = entry as [SqlMethod, PolicyConditionValue<Policy>];
+      // Policies can be a single function or an array of functions, so we normalize it to an array.
+      const conditionValues = Array.isArray(policy) ? policy : [policy];
+      conditionValues.forEach((policy) => {
+        if (policy.name === 'ifUserHasRoleCreator') {
+          // If the user specified ifUserHasRole, we need to make sure the user_has_role function exists in the DB.
+          createUserHasRoleDbFunction = true;
+        }
+        sqlStatements.push(policy({ tableName, method }));
+      });
+    });
+
+    return {
+      sql: sqlStatements.join('\n'),
+      createUserHasRoleDbFunction,
+    };
   },
   tableName,
 });
 
-export { allowAllAccess, denyAllAccess, rlsPolicyBuilder, userIsOwner };
+export { allowAllAccess, denyAllAccess, ifUserHasRole, ifUserIsOwner, rlsPolicyBuilder };

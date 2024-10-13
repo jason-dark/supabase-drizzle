@@ -15,6 +15,8 @@ const getPolicyName = ({ access, method }: GetPolicyNameProps) => {
       return `"Allow ${upperMethod} access to everyone"`;
     case 'USER_IS_OWNER':
       return `"Allow ${upperMethod} access based on user_id"`;
+    case 'USER_HAS_ROLE':
+      return `"Allow ${upperMethod} access based on user_id having role and belonging to same org"`;
     default:
       return '';
   }
