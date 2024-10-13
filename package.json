@@ -1,5 +1,9 @@
 {
-  "author": "jason-dark",
+  "author": {
+    "email": "jason@jasondark.co.nz",
+    "name": "Jason Dark",
+    "url": "https://www.linkedin.com/in/jason-dark/"
+  },
   "bin": {
     "supabase-drizzle": "dist/cli/index.js"
   },
@@ -31,7 +35,24 @@
   "files": [
     "dist"
   ],
-  "license": "ISC",
+  "keywords": [
+    "database",
+    "drizzle",
+    "migrations",
+    "orm",
+    "pg",
+    "policies",
+    "postgres",
+    "postgresql",
+    "PostgREST",
+    "rls",
+    "row level security",
+    "schema",
+    "supabase",
+    "ts",
+    "typescript"
+  ],
+  "license": "MIT",
   "main": "dist/index.js",
   "name": "supabase-drizzle",
   "repository": {
