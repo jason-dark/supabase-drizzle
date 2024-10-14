@@ -5,6 +5,12 @@
 [![CI - Test and Build](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml)
 [![Release to NPM](https://github.com/jason-dark/supabase-drizzle/actions/workflows/release.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/release.yml)
 
+## 🚧 Active Development Notice 🚧
+
+**`supabase-drizzle`** is currently in development and not yet ready for production use. I am actively working on improvements, bug fixes, and adding new features. Expect breaking changes as I refine the library. Stay tuned for updates, and feel free to contribute or raise issues as the project evolves.
+
+---
+
 
 ## Overview
 
