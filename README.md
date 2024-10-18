@@ -10,6 +10,10 @@
 
 **`supabase-drizzle`** lets you manage Postgres RLS policies with Drizzle-like syntax, just as you manage your Postgres schema.
 
+## 🚧 Active Development Notice 🚧
+
+**`supabase-drizzle`** is a new library that is under active development. It is not fully battle-tested yet, but I’m working on improvements to make it production-ready. In the meantime, there could be breaking changes as I continue refining it. Feel free to contribute or open issues as the project progresses.
+
 ---
 
 ## Motivation 🔥
