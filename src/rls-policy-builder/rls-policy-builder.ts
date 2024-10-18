@@ -96,6 +96,8 @@ const rlsPolicyBuilder = <
 
   type Policy = typeof everyone | typeof own | typeof hasRole | typeof authenticated;
 
+  // TODO: More strongly type TableName so that if multi-tenant is enabled, each table has to have a tenant_id column,
+  // except for the tenants table which must have an id column. Right now the user gets no type error so this fails at migration time.
   const rls = (tableName: TableName, conditions: PolicyConditions<Policy>) => ({
     func: () => {
       const sqlStatements: string[] = [
