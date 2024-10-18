@@ -1,2 +1,4 @@
-export * from './rls-policy-builder';
-export * from './utils/define-config/define-config';
+export { rlsPolicyBuilder } from './rls-policy-builder';
+export type { DefineConfigProps } from './types';
+export * from './utils/define-config';
+export * from './utils/get-table-name';

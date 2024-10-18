@@ -1,5 +1,6 @@
 import { defineConfig as drizzleDefineConfig } from 'drizzle-kit';
-import { defineConfig, DefineConfigProps } from './define-config';
+import { DefineConfigProps } from '../../types';
+import { defineConfig } from './define-config';
 
 describe('defineConfig', () => {
   it('should return the same value as defineConfig from drizzle-kit', () => {

@@ -76,27 +76,30 @@ export default defineConfig({
 ```
 
 ### Step 4
-Define RLS policies for your tables in `policies.config.ts`:
+Define RLS policies for your tables in `policies.config.ts`. This is a  basic example, see [examples](#examples) below for user role and multi-tenant configurations:
 ```typescript
 // policies.config.ts
 
-import { allowAllAccess, denyAllAccess, rlsPolicyBuilder, ifUserIsOwner } from 'supabase-drizzle';
+import { rlsPolicyBuilder } from 'supabase-drizzle';
+import * as schema from './schema';
 
-// You can define policies for each method on a table like this:
-const timeLogsTablePolicy = rlsPolicyBuilder('time_logs', {
-  insert: ifUserIsOwner(),
-  update: ifUserIsOwner(),
-  delete: denyAllAccess(),
-  select: allowAllAccess(),
+const { tables, own, rls, authenticated, everyone } = rlsPolicyBuilder(schema, {});
+
+const profiles = rls(tables.profiles, {
+  insert: authenticated(), // User can create their profile row if authenticated
+  update: own(), // User can update their own profile row
+  select: everyone(), // Everyone can select all profile rows
 });
 
-// You can apply the same policy to all methods like this:
-const salariesTablePolicy = rlsPolicyBuilder('salaries', {
-  all: denyAllAccess(),
+const tenantUserRoles = rls(tables.todos, {
+  insert: authenticated(), // User can create a todo row if authenticated
+  update: own(), // User can update their own todo row
+  select: own(), // User can select their own todo row
+  delete: own(), // User can delete their own todo row
 });
 
 // Make sure your policies are exported from the file!
-export { salariesTablePolicy, timeLogsTablePolicy };
+export { profiles, tenantUserRoles };
 ```
 
 ### Step 5
@@ -136,77 +139,115 @@ npm run drizzle-generate-schema && npm run drizzle-generate-rls && npm run yarn 
 ```
 
 ---
-## Documentation 📚
+## Usage 📚
 
-### **`rlsPolicyBuilder(tableName: string, policies: PolicyConditions)`**
+### **`rlsPolicyBuilder(schema, rlsConfig)`**
 
-Defines the RLS policies for a given table. Requires two arguments; the table name and an object that describes its RLS policies. Make sure to only reference tables by their names as defined in your Drizzle schema.
+Returns functions that allow you to define RLS policies for your tables.
 ```typescript
-const timeLogsTablePolicy = rlsPolicyBuilder('todos', {
-  insert: ifUserIsOwner(),
-  update: ifUserIsOwner(),
-  delete: ifUserIsOwner(),
-  select: allowAllAccess(),
-});
+// policies.config.ts
 
-export { timeLogsTablePolicy };
+import { rlsPolicyBuilder } from 'supabase-drizzle';
+import * as schema from './schema';
+
+const {
+  tables, // Strongly typed table names object based on your schema
+  roles, // Strong typed user roles object based on your RLS config
+  rls, // Function to define RLS policies for a table
+  own, // RLS policy to allow access where the row's user_id matches the user's uid
+  authenticated // RLS policy to allow access to all authenticated users
+  hasRole, // RLS policy to allow access if a user has a role
+  everyone // RLS policy that allows access to all users
+} = rlsPolicyBuilder(
+  schema, // Your drizzle schema (only single file schema supported)
+  {
+    tenantsTable: schema.tenants, // Optional - used for multi-tenant setups
+    userRolesTable: schema.userRoles, // Optional - used for RLS policies with user roles
+    userRoles: { // Optional - used for RLS policies with user roles
+      owner: {},
+      admin: {},
+      member: {}
+    }
+  }
+);
 ```
 
-### **`ifUserIsOwner()`**
+### **`rls()`**
+Function to define RLS policies for a table. 
+```typescript
+// policies.config.ts
 
-Allows access to only the owner of a row for a given method, or for all methods. Ownership is determined by matching the `user_id` column on the table with the authenticated user's id. In this example, only the owner can `INSERT` or `UPDATE` the row: 
-```typescript
-const timeLogsTablePolicy = rlsPolicyBuilder('time_logs', {
-  insert: ifUserIsOwner(),
-  update: ifUserIsOwner(),
-  delete: denyAllAccess(),
-  select: allowAllAccess(),
+const profiles = rls(tables.profiles, {
+  insert: authenticated(),
+  update: own(),
+  select: everyone(),
 });
-```
-You can also apply this policy to **all** methods. In this example, only the owner can `INSERT`, `UPDATE`, `DELETE`, and `SELECT` their row.
-```typescript
-const timeLogsTablePolicy = rlsPolicyBuilder('hr_complaints', {
-  all: ifUserIsOwner(),
-});
+
+export { profiles }
 ```
 
-### **`denyAllAccess()`**
+### **`own()`**
+RLS policy to allow access where the row's `user_id` matches the user's `uid`. Tables must have a `user_id` column to use this policy.  
+```typescript
+// policies.config.ts
 
-Denies access to all users for a given method, or for all methods on table: 
-```typescript
-const timeLogsTablePolicy = rlsPolicyBuilder('leave_balances', {
-  insert: denyAllAccess(),
-  update: denyAllAccess(),
-  delete: denyAllAccess(),
-  select: ifUserIsOwner(),
+const todos = rls(tables.todos, {
+  all: own() // User has access to all methods where their uid matches the row's user_id
 });
-```
-```typescript
-const timeLogsTablePolicy = rlsPolicyBuilder('pay_rises', {
-  all: denyAllAccess()
-});
+
+export { profiles }
 ```
 
-###  **`allowAllAccess()`**
+###  **`authenticated()`**
+RLS policy to allow access to authenticated users. 
+```typescript
+// policies.config.ts
 
-Allows access to all users for a given method, or for all methods on table: 
-```typescript
-const timeLogsTablePolicy = rlsPolicyBuilder('staff_birthdays', {
-  select: allowAllAccess(),
-  insert: ifUserIsOwner(),
-  update: ifUserIsOwner(),
-  delete: ifUserIsOwner(),
+const profiles = rls(tables.profiles, {
+  insert: authenticated(),
 });
+
+export { profiles }
 ```
-You *can* allow all access to all methods on a table, but this is almost always **not something you should do**. Exercise extreme caution with this!
+
+###  **`hasRole(userRole: string | string[])`**
+RLS policy to allow access if a user has a role. User roles are defined in your `rlsConfig` passed to `rlsPolicyBuilder`.
 ```typescript
-const timeLogsTablePolicy = rlsPolicyBuilder('executive_salaries', {
-  all: allowAllAccess()
+// policies.config.ts
+
+const profiles = rls(tables.profiles, {
+  insert: authenticated(),
+  select: everyone(),
+  update: own(),
+  delete: hasRole(['admin', 'owner']) // Or simply `hasRole('admin')`
 });
+
+export { profiles }
 ```
+
+###  **`everyone()`**
+RLS policy to allow access to all users. Proceed with caution.
+```typescript
+// policies.config.ts
+
+const profiles = rls(tables.profiles, {
+  select: everyone(),
+});
+
+export { profiles }
+```
+
+---
+## Examples 📝  
+
+- [Basic example 🔗 ](./examples/basic-example/)
+- [User roles example 🔗 ](./examples/user-roles-example/)
+- [Multi-tenant example 🔗 ](./examples/multi-tenant-example/)
+
 ---
 ## Limitations 🚫 
 
+- Currently only a single file Drizzle schema is supported.
 - I have only tested this lib on MacOS. I expect it will work on *nix systems but not Windows. If there is enough interest I might look into it.
 - Only Typescript [Drizzle Kit config](https://orm.drizzle.team/docs/drizzle-config-file) files are supported. Plain JavaScript will not work. Again, if there's enough interest I might look into it.
 
@@ -221,14 +262,7 @@ Contributions are welcome. I am a single developer who built this to solve a pro
 - **`supabase-drizzle`** is not an official library affiliated with the Supabase or Drizzle teams.
 - I make no guarantees that this lib is bug free.
 - I strongly suggest that you manually review generated SQL for RLS migrations before running them.
-- Exercise extreme caution and test thoroughly before using this lib on production databases.
-
----
-## TODOs 🚧
-- [x] Implement `ifUserIsOwner()`, `allowAllAccess()`, and `denyAllAccess()` functions.
-- [ ] Implement additional RLS policy utility functions (e.g., `userIsAdmin`, `userHasRole`).
-- [ ] Add more detailed error handling and logging for RLS policy generation.
-- [ ] Write tests.
+- Don't use this lib anywhere near production databases until it's more stable and battle tested.
 
 ---
 ## License 📝

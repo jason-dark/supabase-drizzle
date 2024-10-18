@@ -1,3 +1,3 @@
-const USER_HAS_ROLE_DB_FUNC_NAME = 'user_has_role';
+const HAS_ROLE_DB_FUNC_NAME = 'HAS_ROLE';
 
-export { USER_HAS_ROLE_DB_FUNC_NAME };
+export { HAS_ROLE_DB_FUNC_NAME };
