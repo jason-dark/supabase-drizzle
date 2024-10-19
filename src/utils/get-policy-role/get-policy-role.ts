@@ -14,6 +14,8 @@ const getPolicyRole = ({ access }: GetPolicyRoleProps) => {
       return 'TO authenticated';
     case 'HAS_ROLE':
       return 'TO authenticated';
+    case 'BELONGS_TENANT':
+      return 'TO authenticated';
     default:
       return '';
   }

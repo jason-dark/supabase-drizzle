@@ -1,7 +1,7 @@
 import { rlsPolicyBuilder } from 'supabase-drizzle';
 import * as schema from './schema';
 
-const { tables, own, rls, authenticated, hasRole } = rlsPolicyBuilder(schema, {
+const { tables, own, rls, authenticated, hasRole, belongsTenant } = rlsPolicyBuilder(schema, {
   tenantsTable: schema.tenants,
   userRolesTable: schema.userRoles,
   userRoles: {
@@ -14,13 +14,13 @@ const { tables, own, rls, authenticated, hasRole } = rlsPolicyBuilder(schema, {
 const userRoles = rls(tables.userRoles, {
   insert: hasRole(['admin', 'owner']), // Only admin and owner can insert a user role,
   update: hasRole(['admin', 'owner']), // Only admin and owner can update a user role,
-  select: hasRole(['member', 'admin', 'owner']), // All users belonging to the tenant can select a user role row
+  select: belongsTenant(), // All users belonging to the tenant can select a user role row
 });
 
 const profiles = rls(tables.profiles, {
   insert: authenticated(), // User can create their profile row if authenticated
   update: own(), // User can update their own profile row
-  select: hasRole(['member', 'admin', 'owner']), // All users belonging to the tenant can select a profile row
+  select: belongsTenant(), // All users belonging to the tenant can select a profile row
   delete: hasRole('owner'), // Only owner can delete a profile row,
 });
 

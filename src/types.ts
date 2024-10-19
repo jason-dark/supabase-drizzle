@@ -18,7 +18,12 @@ type PolicyConditions<T extends (...args: never[]) => unknown> =
   | PolicyConditionsAllMethods<T>
   | PolicyConditionsSingleMethods<T>;
 
-type TableAccess = 'PUBLIC_ACCESS' | 'USER_IS_OWNER' | 'HAS_ROLE' | 'AUTHENTICATED';
+type TableAccess =
+  | 'PUBLIC_ACCESS'
+  | 'USER_IS_OWNER'
+  | 'HAS_ROLE'
+  | 'BELONGS_TENANT'
+  | 'AUTHENTICATED';
 
 type SnakeCase<S extends string> = S extends `${infer First}${infer Rest}`
   ? First extends Uppercase<First>
@@ -31,8 +36,11 @@ type DefineConfigProps = DrizzleConfig & {
   policies: string;
 };
 
+type HasKey<O, K extends PropertyKey> = K extends keyof O ? true : false;
+
 export type {
   DefineConfigProps,
+  HasKey,
   PolicyConditions,
   PolicyConditionValue,
   SnakeCase,

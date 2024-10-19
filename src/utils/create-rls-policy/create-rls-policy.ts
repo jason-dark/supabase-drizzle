@@ -22,7 +22,14 @@ type WithRoleProps = {
   tenantsTable?: string;
 };
 
-type CreateRlsPolicyProps = CommonProps & (WithoutRoleProps | WithRoleProps);
+type BelongsTenantProps = {
+  access: Extract<TableAccess, 'BELONGS_TENANT'>;
+  userRole?: never;
+  tenantsTable: string;
+  userRolesTable?: never;
+};
+
+type CreateRlsPolicyProps = CommonProps & (WithoutRoleProps | WithRoleProps | BelongsTenantProps);
 
 const createRlsPolicy = ({
   tableName,
@@ -32,6 +39,18 @@ const createRlsPolicy = ({
   tenantsTable,
   userRolesTable,
 }: CreateRlsPolicyProps): string => {
+  // TODO: Refactor this props logic so that we aren't duplicating the types for createRlsPolicy and getPolicyQualification
+  const getPolicyQualificationProps = () => {
+    switch (access) {
+      case 'HAS_ROLE':
+        return { method, access, userRole, tenantsTable, userRolesTable };
+      case 'BELONGS_TENANT':
+        return { method, access, tenantsTable };
+      default:
+        return { method, access };
+    }
+  };
+
   return (
     [
       `CREATE POLICY`,
@@ -40,11 +59,7 @@ const createRlsPolicy = ({
       `AS PERMISSIVE`,
       `FOR ${method.toUpperCase()}`,
       getPolicyRole({ access }),
-      getPolicyQualification(
-        access === 'HAS_ROLE'
-          ? { method, access, userRole, tableName, tenantsTable, userRolesTable }
-          : { method, access }
-      ),
+      getPolicyQualification(getPolicyQualificationProps()),
     ]
       .filter((statement) => statement)
       .join(' ') + `;`

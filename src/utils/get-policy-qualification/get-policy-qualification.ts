@@ -7,7 +7,6 @@ type CommonProps = {
 type WithUserRoleProps = {
   access: Extract<TableAccess, 'HAS_ROLE'>;
   userRole: string[];
-  tableName: string;
   tenantsTable?: string;
   userRolesTable: string;
 };
@@ -15,42 +14,51 @@ type WithUserRoleProps = {
 type WithoutUserRoleProps = {
   access: Exclude<TableAccess, 'HAS_ROLE'>;
   userRole?: never;
-  tableName?: never;
   tenantsTable?: never;
   userRolesTable?: never;
 };
 
-type GetPolicyQualificationProps = CommonProps & (WithUserRoleProps | WithoutUserRoleProps);
+type BelongsTenantProps = {
+  access: Extract<TableAccess, 'BELONGS_TENANT'>;
+  userRole?: never;
+  tenantsTable: string;
+  userRolesTable?: never;
+};
+
+type GetPolicyQualificationProps = CommonProps &
+  (WithUserRoleProps | WithoutUserRoleProps | BelongsTenantProps);
 
 const getPolicyQualification = ({
   method,
   access,
   userRole = [],
   tenantsTable,
-  tableName,
 }: GetPolicyQualificationProps) => {
   const upperMethod = method.toUpperCase();
 
   const userRolesArrayString = userRole.map((role) => `'${role}'`).join(', ');
 
-  const singleTenantRoleCheck = `(auth.jwt() -> 'app_metadata' -> 'claims' ->> 'user_role') IN (${userRolesArrayString})`;
+  const tenantRoleCheck = {
+    multiTenant: `EXISTS ( SELECT 1 FROM JSONB_ARRAY_ELEMENTS(auth.jwt () -> 'app_metadata' -> 'tenants') AS tenants WHERE (tenants ->> 'tenant_id')::UUID = tenant_id AND (tenants ->> 'user_role') IN (${userRolesArrayString}) )`,
+    singleTenant: `(auth.jwt() -> 'app_metadata' -> 'user_role') IN (${userRolesArrayString})`,
+  };
 
-  const tenantIdKey = tenantsTable === tableName ? 'id' : 'tenant_id';
-
-  const multiTenantRoleCheck = `EXISTS ( SELECT 1 FROM JSONB_ARRAY_ELEMENTS(auth.jwt () -> 'app_metadata' -> 'tenants') AS tenants WHERE (tenants ->> 'tenant_id')::UUID = ${tenantIdKey} AND (tenants ->> 'user_role') IN (${userRolesArrayString}) )`;
+  const tenantMemberCheck = `EXISTS ( SELECT 1 FROM JSONB_ARRAY_ELEMENTS(auth.jwt () -> 'app_metadata' -> 'tenants') AS tenants WHERE (tenants ->> 'tenant_id')::UUID = tenant_id )`;
 
   const statements: Record<'using' | 'withCheck', Record<TableAccess, string>> = {
     using: {
       PUBLIC_ACCESS: 'USING ( true )',
       AUTHENTICATED: 'USING ( true )',
       USER_IS_OWNER: 'USING ( (select auth.uid()) = user_id )',
-      HAS_ROLE: `USING ( ${tenantsTable ? multiTenantRoleCheck : singleTenantRoleCheck} )`,
+      HAS_ROLE: `USING ( ${tenantsTable ? tenantRoleCheck.multiTenant : tenantRoleCheck.singleTenant} )`,
+      BELONGS_TENANT: `USING ( ${tenantMemberCheck} )`,
     },
     withCheck: {
       PUBLIC_ACCESS: 'WITH CHECK ( true )',
       AUTHENTICATED: 'WITH CHECK ( true )',
       USER_IS_OWNER: 'WITH CHECK ( (select auth.uid()) = user_id )',
-      HAS_ROLE: `WITH CHECK ( ${tenantsTable ? multiTenantRoleCheck : singleTenantRoleCheck} )`,
+      HAS_ROLE: `WITH CHECK ( ${tenantsTable ? tenantRoleCheck.multiTenant : tenantRoleCheck.singleTenant} )`,
+      BELONGS_TENANT: `USING ( ${tenantMemberCheck} )`,
     },
   };
 

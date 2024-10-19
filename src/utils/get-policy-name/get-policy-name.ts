@@ -15,6 +15,8 @@ const getPolicyName = ({ access, method }: GetPolicyNameProps) => {
       return `"allow_${lowerMethod}_access_to_authenticated_users"`;
     case 'USER_IS_OWNER':
       return `"allow_${lowerMethod}_access_based_on_user_id"`;
+    case 'BELONGS_TENANT':
+      return `"allow_${lowerMethod}_access_based_on_tenant_id"`;
     case 'HAS_ROLE':
       return `"allow_${lowerMethod}_access_based_on_user_role"`;
     default:

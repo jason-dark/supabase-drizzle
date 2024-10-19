@@ -1,6 +1,6 @@
 import { toSnakeCase } from 'drizzle-orm/casing';
 import { getTableConfig, PgTable, TableConfig } from 'drizzle-orm/pg-core';
-import { PolicyConditions, PolicyConditionValue, SnakeCase, SqlMethod } from '../types';
+import { HasKey, PolicyConditions, PolicyConditionValue, SnakeCase, SqlMethod } from '../types';
 import { createRlsPolicy, CreateRlsPolicyProps } from '../utils/create-rls-policy/';
 
 type UserRolesTableMultiTenant = {
@@ -21,7 +21,7 @@ type NoTenantProps = {
 
 type MultiTenantProps = {
   userRoles: Record<string, object>;
-  tenantsTable: { $inferSelect: { id: string } };
+  tenantsTable: { $inferSelect: { tenant_id: string } | { tenantId: string } };
   userRolesTable: UserRolesTableMultiTenant;
 };
 
@@ -94,11 +94,26 @@ const rlsPolicyBuilder = <
         userRolesTable,
       });
 
-  type Policy = typeof everyone | typeof own | typeof hasRole | typeof authenticated;
+  const belongsTenant =
+    () =>
+    ({ method, tableName }: Omit<CreateRlsPolicyProps, 'access'>) =>
+      createRlsPolicy({
+        access: 'BELONGS_TENANT',
+        method,
+        tableName,
+        tenantsTable,
+      });
+
+  type RlsPolicies =
+    | typeof everyone
+    | typeof own
+    | typeof hasRole
+    | typeof authenticated
+    | typeof belongsTenant;
 
   // TODO: More strongly type TableName so that if multi-tenant is enabled, each table has to have a tenant_id column,
   // except for the tenants table which must have an id column. Right now the user gets no type error so this fails at migration time.
-  const rls = (tableName: TableName, conditions: PolicyConditions<Policy>) => ({
+  const rls = (tableName: TableName, conditions: PolicyConditions<RlsPolicies>) => ({
     func: () => {
       const sqlStatements: string[] = [
         `-- Define RLS policies for "public"."${tableName}"`,
@@ -111,7 +126,7 @@ const rlsPolicyBuilder = <
 
       // For each method (ALL, SELECT, INSERT, UPDATE, DELETE), generate the SQL statement for the policy(ies) provided
       Object.entries(cleanedConditions).forEach((entry) => {
-        const [method, policy] = entry as [SqlMethod, PolicyConditionValue<Policy>];
+        const [method, policy] = entry as [SqlMethod, PolicyConditionValue<RlsPolicies>];
         // Policies can be a single function or an array of functions, so we normalize it to an array.
         const conditionValues = Array.isArray(policy) ? policy : [policy];
         conditionValues.forEach((policy) => {
@@ -127,7 +142,7 @@ const rlsPolicyBuilder = <
     tenantsTable,
   });
 
-  return {
+  const baseResult = {
     tables,
     roles: userRoles,
     rls,
@@ -136,6 +151,15 @@ const rlsPolicyBuilder = <
     authenticated,
     hasRole,
   };
+
+  const multiTenantResult = { ...baseResult, belongsTenant };
+
+  return (config?.tenantsTable ? multiTenantResult : baseResult) as HasKey<
+    C,
+    'tenantsTable'
+  > extends true
+    ? typeof multiTenantResult
+    : typeof baseResult;
 };
 
 export { rlsPolicyBuilder };

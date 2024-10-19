@@ -161,6 +161,7 @@ const {
   own, // RLS policy to allow access where the row's user_id matches the user's uid
   authenticated // RLS policy to allow access to all authenticated users
   hasRole, // RLS policy to allow access if a user has a role
+  belongsTenant, // RLS policy that allows access to all users belonging to a tenant (used only in multi-tenant configs)
   everyone // RLS policy that allows access to all users
 } = rlsPolicyBuilder(
   schema, // Your drizzle schema (only single file schema supported)
@@ -224,6 +225,20 @@ const profiles = rls(tables.profiles, {
   select: everyone(),
   update: own(),
   delete: hasRole(['admin', 'owner']) // Or simply `hasRole('admin')`
+});
+
+export { profiles }
+```
+
+###  **`belongsTenant()`**
+RLS policy to allow access if a user belongs to a tenant. Only available when `tenantTable` is provided to `rlsConfig`, signifying a multi-tenant configuration.
+```typescript
+// policies.config.ts
+
+const profiles = rls(tables.profiles, {
+  insert: authenticated(),
+  select: belongsTenant(), // All users belonging to the same tenant can select
+  update: own(),
 });
 
 export { profiles }
