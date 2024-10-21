@@ -59,10 +59,6 @@ grant all
   on table public.${userRolesTable}
   to supabase_auth_admin;
 
-revoke all
-  on table public.${userRolesTable}
-  from authenticated, anon, public;
-
 create policy "allow_supabase_auth_admin_to_select_${userRolesTable}" ON public.${userRolesTable} 
 as permissive for select
 to supabase_auth_admin
