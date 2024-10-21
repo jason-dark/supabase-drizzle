@@ -58,7 +58,7 @@ const getPolicyQualification = ({
       AUTHENTICATED: 'WITH CHECK ( true )',
       USER_IS_OWNER: 'WITH CHECK ( (select auth.uid()) = user_id )',
       HAS_ROLE: `WITH CHECK ( ${tenantsTable ? tenantRoleCheck.multiTenant : tenantRoleCheck.singleTenant} )`,
-      BELONGS_TENANT: `USING ( ${tenantMemberCheck} )`,
+      BELONGS_TENANT: `WITH CHECK ( ${tenantMemberCheck} )`,
     },
   };
 
