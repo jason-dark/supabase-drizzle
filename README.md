@@ -5,14 +5,11 @@
 [![CI - Test and Build](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/ci.yml)
 [![Release to NPM](https://github.com/jason-dark/supabase-drizzle/actions/workflows/release.yml/badge.svg)](https://github.com/jason-dark/supabase-drizzle/actions/workflows/release.yml)
 
+---
 
-## Overview
+## ⚰️ Deprecation Notice ⚰️
 
-**`supabase-drizzle`** lets you manage Postgres RLS policies with Drizzle-like syntax, just as you manage your Postgres schema.
-
-## 🚧 Active Development Notice 🚧
-
-**`supabase-drizzle`** is a new library that is under active development. It is not fully battle-tested yet, but I’m working on improvements to make it production-ready. In the meantime, there could be breaking changes as I continue refining it. Feel free to contribute or open issues as the project progresses.
+This package was created to plug a gap when Drizzle ORM did not support RLS. Now that it does, there is no reason to use or maintain this package. Please follow the Drizzle ORM RLS with Supabase docs [here](https://orm.drizzle.team/docs/rls#using-with-supabase) instead.
 
 ---
 
